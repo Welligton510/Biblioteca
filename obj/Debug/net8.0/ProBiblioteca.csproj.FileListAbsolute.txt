@@ -1,0 +1,14 @@
+C:\Users\55819\ProBiblioteca\bin\Debug\net8.0\ProBiblioteca.exe
+C:\Users\55819\ProBiblioteca\bin\Debug\net8.0\ProBiblioteca.deps.json
+C:\Users\55819\ProBiblioteca\bin\Debug\net8.0\ProBiblioteca.runtimeconfig.json
+C:\Users\55819\ProBiblioteca\bin\Debug\net8.0\ProBiblioteca.dll
+C:\Users\55819\ProBiblioteca\bin\Debug\net8.0\ProBiblioteca.pdb
+C:\Users\55819\ProBiblioteca\obj\Debug\net8.0\ProBiblioteca.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\55819\ProBiblioteca\obj\Debug\net8.0\ProBiblioteca.AssemblyInfoInputs.cache
+C:\Users\55819\ProBiblioteca\obj\Debug\net8.0\ProBiblioteca.AssemblyInfo.cs
+C:\Users\55819\ProBiblioteca\obj\Debug\net8.0\ProBiblioteca.csproj.CoreCompileInputs.cache
+C:\Users\55819\ProBiblioteca\obj\Debug\net8.0\ProBiblioteca.dll
+C:\Users\55819\ProBiblioteca\obj\Debug\net8.0\refint\ProBiblioteca.dll
+C:\Users\55819\ProBiblioteca\obj\Debug\net8.0\ProBiblioteca.pdb
+C:\Users\55819\ProBiblioteca\obj\Debug\net8.0\ProBiblioteca.genruntimeconfig.cache
+C:\Users\55819\ProBiblioteca\obj\Debug\net8.0\ref\ProBiblioteca.dll
