@@ -1,171 +1,228 @@
-﻿// Enum para status de empréstimo
-enum StatusEmprestimo { Ativo, Finalizado }
+﻿using System;
+using System.Collections.Generic;
 
-// Struct para representar o período do empréstimo
-struct PeriodoEmprestimo
+// Enum para representar o período de empréstimo
+public struct PeriodoEmprestimo
 {
-    public DateTime DataInicio;
-    public DateTime DataFim;
+    public DateTime Inicio;
+    public DateTime Fim;
 }
 
 // Classe base Pessoa
-class Pessoa
+public class Pessoa
 {
     public string Nome { get; set; }
 }
 
-// Usuario herda de Pessoa
-class Usuario : Pessoa
+// Classe Usuário herda de Pessoa
+public class Usuario : Pessoa
 {
     public string Matricula { get; set; }
-    public List<Emprestimo> Emprestimos { get; set; } = new();
+    public List<Livro> LivrosEmprestados { get; set; } = new List<Livro>();
 }
 
 // Classe Livro
-class Livro
+public class Livro
 {
     public string Titulo { get; set; }
     public string Autor { get; set; }
     public string ISBN { get; set; }
 
-    private int quantidade;
-    public int Quantidade
+    private int paginas;
+    public int Paginas
     {
-        get => quantidade;
-        set => quantidade = value < 0 ? 0 : value;
+        get { return paginas; }
+        set
+        {
+            if (value < 1)
+                throw new ArgumentException("Número de páginas deve ser maior que 0.");
+            paginas = value;
+        }
     }
 }
 
 // Classe Emprestimo
-class Emprestimo
+public class Emprestimo
 {
     public Usuario Usuario { get; set; }
     public Livro Livro { get; set; }
     public PeriodoEmprestimo Periodo { get; set; }
-    public StatusEmprestimo Status { get; set; } = StatusEmprestimo.Ativo;
+    public bool Finalizado { get; set; } = false;
 }
 
-// Classe Biblioteca que gerencia tudo
-class Biblioteca
+// Classe principal Biblioteca
+public class Biblioteca
 {
-    public List<Livro> Livros = new();
-    public List<Usuario> Usuarios = new();
-    public List<Emprestimo> Emprestimos = new();
+    private List<Livro> livros = new List<Livro>();
+    private List<Usuario> usuarios = new List<Usuario>();
+    private List<Emprestimo> emprestimos = new List<Emprestimo>();
 
-    public void CadastrarLivro()
+    public void AdicionarLivro(Livro livro)
     {
-        Console.Write("Título: ");
-        string titulo = Console.ReadLine();
-        Console.Write("Autor: ");
-        string autor = Console.ReadLine();
-        Console.Write("ISBN: ");
-        string isbn = Console.ReadLine();
-        Console.Write("Quantidade: ");
-        int qtd = int.Parse(Console.ReadLine());
-
-        Livros.Add(new Livro { Titulo = titulo, Autor = autor, ISBN = isbn, Quantidade = qtd });
-        Console.WriteLine("Livro cadastrado com sucesso!\n");
+        livros.Add(livro);
     }
 
-    public void CadastrarUsuario()
+    public void AdicionarUsuario(Usuario usuario)
     {
-        Console.Write("Nome: ");
-        string nome = Console.ReadLine();
-        Console.Write("Matrícula: ");
-        string matricula = Console.ReadLine();
-
-        Usuarios.Add(new Usuario { Nome = nome, Matricula = matricula });
-        Console.WriteLine("Usuário cadastrado com sucesso!\n");
+        usuarios.Add(usuario);
     }
 
-    public void RegistrarEmprestimo()
+    public void RegistrarEmprestimo(string matricula, string tituloLivro)
     {
-        Console.Write("Matrícula do usuário: ");
-        string mat = Console.ReadLine();
-        Usuario usuario = Usuarios.Find(u => u.Matricula == mat);
+        var usuario = usuarios.Find(u => u.Matricula == matricula);
+        var livro = livros.Find(l => l.Titulo.Trim().ToLower() == tituloLivro.Trim().ToLower());
 
-        Console.Write("ISBN do livro: ");
-        string isbn = Console.ReadLine();
-        Livro livro = Livros.Find(l => l.ISBN == isbn);
-
-        if (usuario != null && livro != null && livro.Quantidade > 0)
+        if (usuario == null || livro == null)
         {
-            livro.Quantidade--;
-            PeriodoEmprestimo periodo = new() { DataInicio = DateTime.Today, DataFim = DateTime.Today.AddDays(7) };
-            Emprestimo emp = new() { Usuario = usuario, Livro = livro, Periodo = periodo };
-            usuario.Emprestimos.Add(emp);
-            Emprestimos.Add(emp);
-            Console.WriteLine("Empréstimo registrado com sucesso!\n");
+            Console.WriteLine("Usuário ou livro não encontrado.");
+            return;
+        }
+
+        // Verificar se o livro já está emprestado
+        var emprestado = emprestimos.Exists(e => e.Livro.Titulo == livro.Titulo && !e.Finalizado);
+        if (emprestado)
+        {
+            Console.WriteLine("Este livro já está emprestado e não pode ser emprestado novamente agora.");
+            return;
+        }
+
+        var emprestimo = new Emprestimo
+        {
+            Usuario = usuario,
+            Livro = livro,
+            Periodo = new PeriodoEmprestimo
+            {
+                Inicio = DateTime.Now,
+                Fim = DateTime.Now.AddDays(7)
+            }
+        };
+
+        usuario.LivrosEmprestados.Add(livro);
+        emprestimos.Add(emprestimo);
+        Console.WriteLine("Empréstimo registrado com sucesso!");
+    }
+
+    public void RegistrarDevolucao(string matricula, string tituloLivro)
+    {
+        var emprestimo = emprestimos.Find(e => e.Usuario.Matricula == matricula && e.Livro.Titulo == tituloLivro && !e.Finalizado);
+        if (emprestimo != null)
+        {
+            emprestimo.Finalizado = true;
+            emprestimo.Usuario.LivrosEmprestados.Remove(emprestimo.Livro);
+            Console.WriteLine("Devolução registrada com sucesso!");
         }
         else
         {
-            Console.WriteLine("Usuário ou livro não encontrado ou livro indisponível.\n");
+            Console.WriteLine("Empréstimo não encontrado.");
         }
     }
 
-    public void RegistrarDevolucao()
+    public void ListarLivros()
     {
-        Console.Write("Matrícula do usuário: ");
-        string mat = Console.ReadLine();
-        Usuario usuario = Usuarios.Find(u => u.Matricula == mat);
-
-        if (usuario != null)
+        foreach (var livro in livros)
         {
-            Emprestimo emp = Emprestimos.Find(e => e.Usuario == usuario && e.Status == StatusEmprestimo.Ativo);
-            if (emp != null)
+            Console.WriteLine($"Título: {livro.Titulo}, Autor: {livro.Autor}, ISBN: {livro.ISBN}, Páginas: {livro.Paginas}");
+        }
+    }
+
+    public void RelatorioLivrosEmprestados()
+    {
+        foreach (var emp in emprestimos.FindAll(e => !e.Finalizado))
+        {
+            Console.WriteLine($"{emp.Livro.Titulo} emprestado para {emp.Usuario.Nome}");
+        }
+    }
+
+    public void RelatorioUsuariosComLivros()
+    {
+        foreach (var u in usuarios)
+        {
+            if (u.LivrosEmprestados.Count > 0)
             {
-                emp.Status = StatusEmprestimo.Finalizado;
-                emp.Livro.Quantidade++;
-                Console.WriteLine("Devolução registrada!\n");
+                Console.WriteLine($"Usuário: {u.Nome}, Livros: {string.Join(", ", u.LivrosEmprestados.ConvertAll(l => l.Titulo))}");
             }
-            else Console.WriteLine("Nenhum empréstimo ativo encontrado.\n");
         }
-        else Console.WriteLine("Usuário não encontrado.\n");
-    }
-
-    public void Relatorios()
-    {
-        Console.WriteLine("\n--- Relatórios ---");
-        Console.WriteLine("Livros disponíveis:");
-        foreach (var l in Livros) if (l.Quantidade > 0) Console.WriteLine("- " + l.Titulo);
-
-        Console.WriteLine("\nLivros emprestados:");
-        foreach (var e in Emprestimos) if (e.Status == StatusEmprestimo.Ativo) Console.WriteLine("- " + e.Livro.Titulo);
-
-        Console.WriteLine("\nUsuários com livros:");
-        foreach (var u in Usuarios)
-        {
-            if (u.Emprestimos.Exists(e => e.Status == StatusEmprestimo.Ativo))
-                Console.WriteLine("- " + u.Nome);
-        }
-        Console.WriteLine();
     }
 }
 
-// Classe Program com o menu principal
+// Programa principal
 class Program
 {
     static void Main()
     {
-        Biblioteca biblio = new();
-        int op;
-        do
-        {
-            Console.WriteLine("1 - Cadastrar Livro\n2 - Cadastrar Usuário\n3 - Registrar Empréstimo\n4 - Registrar Devolução\n5 - Exibir Relatórios\n0 - Sair");
-            Console.Write("Escolha: ");
-            op = int.Parse(Console.ReadLine());
-            Console.WriteLine();
+        Biblioteca biblioteca = new Biblioteca();
 
-            switch (op)
+        // Cadastro de livros iniciais com número de páginas
+        biblioteca.AdicionarLivro(new Livro { Titulo = "Dom Casmurro", Autor = "Machado de Assis", ISBN = "978-85-01-01231-3", Paginas = 256 });
+        biblioteca.AdicionarLivro(new Livro { Titulo = "O Cortiço", Autor = "Aluísio Azevedo", ISBN = "978-85-01-04589-2", Paginas = 320 });
+        biblioteca.AdicionarLivro(new Livro { Titulo = "Memórias Póstumas", Autor = "Machado de Assis", ISBN = "978-85-01-03456-8", Paginas = 288 });
+        biblioteca.AdicionarLivro(new Livro { Titulo = "A Moreninha", Autor = "Joaquim Manuel de Macedo", ISBN = "978-85-01-06543-2", Paginas = 176 });
+        biblioteca.AdicionarLivro(new Livro { Titulo = "Iracema", Autor = "José de Alencar", ISBN = "978-85-01-07734-3", Paginas = 192 });
+
+        while (true)
+        {
+            Console.WriteLine("\nSistema de Biblioteca");
+            Console.WriteLine("1 - Cadastrar Livro");
+            Console.WriteLine("2 - Cadastrar Usuário");
+            Console.WriteLine("3 - Registrar Empréstimo");
+            Console.WriteLine("4 - Registrar Devolução");
+            Console.WriteLine("5 - Listar Livros");
+            Console.WriteLine("6 - Relatório de Livros Emprestados");
+            Console.WriteLine("7 - Relatório de Usuários com Livros");
+            Console.WriteLine("0 - Sair");
+            Console.Write("Escolha uma opção: ");
+
+            string opcao = Console.ReadLine();
+            switch (opcao)
             {
-                case 1: biblio.CadastrarLivro(); break;
-                case 2: biblio.CadastrarUsuario(); break;
-                case 3: biblio.RegistrarEmprestimo(); break;
-                case 4: biblio.RegistrarDevolucao(); break;
-                case 5: biblio.Relatorios(); break;
-                case 0: Console.WriteLine("Saindo..."); break;
-                default: Console.WriteLine("Opção inválida!\n"); break;
+                case "1":
+                    Console.Write("Título: ");
+                    string titulo = Console.ReadLine();
+                    Console.Write("Autor: ");
+                    string autor = Console.ReadLine();
+                    Console.Write("ISBN: ");
+                    string isbn = Console.ReadLine();
+                    Console.Write("Número de páginas: ");
+                    int paginas = int.Parse(Console.ReadLine());
+                    biblioteca.AdicionarLivro(new Livro { Titulo = titulo, Autor = autor, ISBN = isbn, Paginas = paginas });
+                    break;
+                case "2":
+                    Console.Write("Nome: ");
+                    string nome = Console.ReadLine();
+                    Console.Write("Matrícula: ");
+                    string matricula = Console.ReadLine();
+                    biblioteca.AdicionarUsuario(new Usuario { Nome = nome, Matricula = matricula });
+                    break;
+                case "3":
+                    Console.Write("Matrícula do usuário: ");
+                    string matEmp = Console.ReadLine();
+                    Console.Write("Título do livro: ");
+                    string titEmp = Console.ReadLine();
+                    biblioteca.RegistrarEmprestimo(matEmp, titEmp);
+                    break;
+                case "4":
+                    Console.Write("Matrícula do usuário: ");
+                    string matDev = Console.ReadLine();
+                    Console.Write("Título do livro: ");
+                    string titDev = Console.ReadLine();
+                    biblioteca.RegistrarDevolucao(matDev, titDev);
+                    break;
+                case "5":
+                    biblioteca.ListarLivros();
+                    break;
+                case "6":
+                    biblioteca.RelatorioLivrosEmprestados();
+                    break;
+                case "7":
+                    biblioteca.RelatorioUsuariosComLivros();
+                    break;
+                case "0":
+                    return;
+                default:
+                    Console.WriteLine("Opção inválida.");
+                    break;
             }
-        } while (op != 0);
+        }
     }
 }
+
